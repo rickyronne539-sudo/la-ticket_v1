@@ -32,15 +32,17 @@ const pretty = (date: string) => new Date(`${date}T12:00:00Z`).toLocaleDateStrin
 export function TicketPicker({
   eventId,
   accountEmail,
+  currency,
+  priceQuote,
   ticketTypes,
-  devPayments,
   eventDay = null,
   hotels = [],
 }: {
   eventId: string;
   accountEmail: string;
+  currency: string;
+  priceQuote: string;
   ticketTypes: TicketTypeOption[];
-  devPayments: boolean;
   eventDay?: string | null;
   hotels?: HotelOption[];
 }) {
@@ -73,6 +75,7 @@ export function TicketPicker({
 
   return (
     <form action={formAction} className="space-y-4">
+      <input type="hidden" name="priceQuote" value={priceQuote} />
       <input type="hidden" name="eventId" value={eventId} />
 
       <ul className="divide-y divide-black/10 dark:divide-white/10">
@@ -83,7 +86,7 @@ export function TicketPicker({
               <div>
                 <p className="font-medium">{t.name}</p>
                 <p className="text-sm opacity-70">
-                  {t.priceCents === 0 ? "Free" : formatPrice(t.priceCents)}
+                  {t.priceCents === 0 ? "Free" : formatPrice(t.priceCents, currency)}
                   {t.unlimited ? " · Unlimited availability" : t.available === 0 ? " · Sold out" : t.available <= 20 ? ` · ${t.available} left` : ""}
                 </p>
               </div>
@@ -123,7 +126,7 @@ export function TicketPicker({
                     <label key={r.id} className="stay-room">
                       <input type="radio" name="roomTypeId" value={r.id} checked={roomId === r.id} onChange={() => { setRoomId(r.id); setRooms(1); }} />
                       <span>{r.name} <small>· sleeps {r.sleeps}</small></span>
-                      <strong>{formatPrice(r.nightlyCents)}<small>/night</small></strong>
+                      <strong>{formatPrice(r.nightlyCents, currency)}<small>/night</small></strong>
                     </label>
                   ))}
                 </div>
@@ -148,14 +151,14 @@ export function TicketPicker({
                 <input name="guestName" required minLength={2} maxLength={120} autoComplete="name" placeholder="As on your ID" className="w-full rounded-md border border-black/15 bg-transparent px-3 py-2 dark:border-white/15" />
               </label>
               {stayProblem ? <p className="text-sm text-amber-700">{stayProblem}</p>
-                : room && <p className="text-sm">{room.hotel.name}, {room.name}: {rooms} room{rooms > 1 ? "s" : ""} × {nights.length} night{nights.length > 1 ? "s" : ""} = <strong>{formatPrice(stayTotal)}</strong></p>}
+                : room && <p className="text-sm">{room.hotel.name}, {room.name}: {rooms} room{rooms > 1 ? "s" : ""} × {nights.length} night{nights.length > 1 ? "s" : ""} = <strong>{formatPrice(stayTotal, currency)}</strong></p>}
             </div>
           )}
         </fieldset>
       )}
 
       <label className="block space-y-1">
-        <span className="text-sm font-medium">Account email for your receipt and tickets{withHotel ? " and booking" : ""}</span>
+        <span className="text-sm font-medium">Account email for your payment receipt{withHotel ? " and booking" : ""}</span>
         <input
           type="email"
           name="email"
@@ -173,12 +176,11 @@ export function TicketPicker({
         disabled={pending || count === 0 || !!stayProblem}
         className="w-full rounded-md bg-foreground px-4 py-2.5 font-medium text-background disabled:opacity-40"
       >
-        {pending ? "Reserving…" : count === 0 ? "Select tickets" : `Checkout · ${formatPrice(total)}`}
+        {pending ? "Reserving…" : count === 0 ? "Select tickets" : `Checkout · ${formatPrice(total, currency)}`}
       </button>
 
       <p className="text-xs opacity-60">
         Tickets{withHotel ? " and rooms are" : " are"} held for 30 minutes while you pay.
-        {devPayments && " Dev mode: Stripe isn't configured, so orders are confirmed without payment."}
       </p>
     </form>
   );

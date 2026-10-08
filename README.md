@@ -6,7 +6,7 @@ Online ticket booking for LA events. Built with Next.js 16 (App Router), TypeScr
 
 1. Create a free **MongoDB Atlas** cluster. Prisma needs a replica set, which Atlas has by default.
 2. Copy `.env.example` to `.env` and fill in `DATABASE_URL`, `TICKET_SECRET` and `CRON_SECRET`.
-3. Install, create indexes, and seed the demo events:
+3. Install, create indexes, and retire any old test listings:
 
 ```bash
 npm install
@@ -15,17 +15,11 @@ npm run db:seed
 npm run dev
 ```
 
-Without `STRIPE_SECRET_KEY`, dev mode confirms orders without payment.
+Checkout requires a live `STRIPE_SECRET_KEY` and live `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`. Missing or test keys disable payments; there is no simulated/free confirmation path.
 
-### Stripe (test mode)
+### Stripe (live payments)
 
-Add `STRIPE_SECRET_KEY` to `.env`, then forward webhooks locally with the Stripe CLI:
-
-```bash
-stripe listen --forward-to localhost:3000/api/stripe/webhook
-```
-
-Optionally put the `whsec_…` secret it prints into `STRIPE_WEBHOOK_SECRET` (payments work without it). Pay with the test card `4242 4242 4242 4242`.
+Configure your live keys in `.env`. Optionally configure a live webhook for `/api/stripe/webhook` and its `STRIPE_WEBHOOK_SECRET`. Orders also reconcile directly with Stripe after checkout. Only paid live sessions issue tickets.
 
 ## How booking works
 
@@ -46,7 +40,7 @@ Guests view their tickets at `/orders/[id]?t=<accessToken>`. The token is the se
 - Schema changes: `npm run db:push` (Prisma Migrate doesn't support MongoDB).
 - `vercel.json` runs the expiry cron every 5 minutes. Vercel's Hobby plan only allows daily crons, so use Pro or an
   external scheduler there. Checkout already clears stale holds, so this is a backstop.
-- The seed events are demo data. Don't sell tickets to real events unless you're the organizer or a partner.
+- `npm run db:seed` retires known test listings without deleting historical orders or creating demo inventory.
 
 ## Roadmap
 
@@ -122,6 +116,9 @@ generated QR code does not create a ticket accepted by the original organizer.
 External purchase buttons have been removed from event discovery and event pages.
 
 
-Customer bookings: `/account/login` supports registration and sign-in; `/account` lists customer orders. New bookings require a server-validated customer session and use that account's email. Ticket pricing is fixed at USD 200 per ticket in `src/lib/pricing.ts`; hotel charges remain separate. Existing order amounts are preserved. Imported events still need actual inventory before sales open. Stripe Checkout sets `payment_intent_data.receipt_email` and a booking reference/event description to email successful live-payment receipts. Test payments do not automatically email receipts. The webhook is optional; see above.
+Customer bookings: `/account/login` supports registration and sign-in; `/account` lists customer orders. New bookings require a server-validated customer session and use that account's email. Ticket types and hotel room prices are stored as USD base cents. Australian events (country AU/AUS/Australia, or a legacy Australia/* timezone) display and charge AUD using Frankfurter daily reference rates, cached for one hour. US events use USD. Signed 30-minute quotes lock the displayed rate and ticket prices through checkout; unavailable/stale rates block AUD checkout. Orders store their currency and exchange rate, so historical USD amounts remain USD. Admin price fields accept USD base prices. Imported events still need actual inventory before sales open. Stripe Checkout sets `payment_intent_data.receipt_email` and a booking reference/event description to email successful live-payment receipts. Test payments do not automatically email receipts. The webhook is optional; see above.
 
 Order session uniqueness uses a MongoDB partial unique index, allowing multiple orders before Stripe assigns their session IDs. Run npm run db:indexes for existing databases; npm run db:push also applies it. Do not add @unique back to Order.stripeSessionId, which would restrict null/missing session IDs to a single order.
+
+
+Olivia Dean Sydney listings (9 and 10 October 2026): run `node --import tsx --env-file=.env prisma/add-olivia-dean.ts`. This idempotent script creates each listing with a USD 110 base ticket price and zero stock; add confirmed inventory in admin before sales open. Dates, 7:30 PM starts, and venue details were checked against https://afterpayarena.com.au/event/olivia-dean. Regenerate Prisma after pulling the currency schema changes (`npx prisma generate`); MongoDB historical documents use USD/1 defaults without repricing existing orders.

@@ -103,7 +103,7 @@ export default async function OrderPage(props: PageProps<"/orders/[id]">) {
             <span>
               {item.quantity} × {item.name}
             </span>
-            <span>{formatPrice(item.priceCents * item.quantity)}</span>
+            <span>{formatPrice(item.priceCents * item.quantity, order.currency)}</span>
           </div>
         ))}
         {order.hotelStay && (
@@ -111,12 +111,12 @@ export default async function OrderPage(props: PageProps<"/orders/[id]">) {
             <span>
               {order.hotelStay.rooms} × {order.hotelStay.roomName}, {order.hotelStay.nights} night{order.hotelStay.nights > 1 ? "s" : ""}
             </span>
-            <span>{formatPrice(order.hotelStay.nightlyCents * order.hotelStay.rooms * order.hotelStay.nights)}</span>
+            <span>{formatPrice(order.hotelStay.nightlyCents * order.hotelStay.rooms * order.hotelStay.nights, order.currency)}</span>
           </div>
         )}
         <div className="mt-2 flex justify-between border-t border-black/10 pt-2 font-semibold dark:border-white/10">
           <span>Total</span>
-          <span>{formatPrice(order.totalCents)}</span>
+          <span>{formatPrice(order.totalCents, order.currency)}</span>
         </div>
       </div>
     </div>

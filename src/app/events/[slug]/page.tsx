@@ -1,12 +1,13 @@
-import { ticketPriceCents } from "@/lib/pricing";
+import { convertCents, ticketPriceCents } from "@/lib/pricing";
 import Link from "next/link";
+import { createPriceQuote } from "@/lib/exchange-rates";
 import { currentCustomer } from "@/lib/customer";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { prisma } from "@/lib/db";
 import { categoryLabels, formatDate, formatPrice } from "@/lib/format";
-import { devPaymentsEnabled } from "@/lib/stripe";
+import { livePaymentsConfigured } from "@/lib/stripe";
 import { TicketPicker } from "@/components/ticket-picker";
 import { Performers, VenueInfo } from "@/components/event-details";
 import { hotelsForEvent } from "@/lib/hotels";
@@ -33,6 +34,8 @@ export default async function EventPage(props: PageProps<"/events/[slug]">) {
   // Sold here only when you've added your own ticket inventory.
   const user = await currentCustomer();
   const sellsHere = event.ticketTypes.length > 0;
+  const quote = sellsHere ? await createPriceQuote(event).catch(() => null) : null;
+  const fromPrice = quote && sellsHere ? Math.min(...event.ticketTypes.map(t => convertCents(ticketPriceCents(t.priceCents), quote.exchangeRate))) : null;
   const stayOptions = sellsHere ? await hotelsForEvent(event).catch(() => null) : null;
 
   return (
@@ -64,22 +67,33 @@ export default async function EventPage(props: PageProps<"/events/[slug]">) {
         {!sellsHere ? (
           <div className="space-y-3" role="status">
             <p className="font-semibold">Tickets not available yet</p>
-            <p className="text-sm opacity-80">LA Tickets price: $200 USD per ticket. Booking will open once ticket inventory is available.</p>
+            <p className="text-sm opacity-80">Booking will open once ticket inventory is available.</p>
             <button type="button" disabled className="ticket-button w-full opacity-50">Booking unavailable</button>
           </div>
+        ) : !quote ? (
+          <p role="alert">Prices are temporarily unavailable. Please refresh this page before booking.</p>
+        ) : !event.ticketTypes.some(t => t.unlimited || t.available > 0) ? (
+          <div className="space-y-3" role="status">
+            <p className="text-xl font-semibold">From {formatPrice(fromPrice!, quote.currency)} per ticket</p>
+            <p>Booking is unavailable until ticket inventory is confirmed.</p>
+            <button type="button" disabled className="ticket-button w-full opacity-50">Booking unavailable</button>
+          </div>
+        ) : !livePaymentsConfigured ? (
+          <p role="alert">Live payments are temporarily unavailable. Please try again later.</p>
         ) : !user ? (
-          <div className="space-y-4"><p className="text-xl font-semibold">{formatPrice(ticketPriceCents(event.slug))} USD per ticket</p><p>Create an account or sign in to book. We’ll email your payment receipt to your account email.</p><Link className="ticket-button" href={`/account/login?next=${encodeURIComponent(`/events/${slug}`)}`}>Create account / Sign in</Link></div>
+          <div className="space-y-4"><p className="text-xl font-semibold">From {formatPrice(fromPrice!, quote.currency)} per ticket</p><p>Create an account or sign in to book. We’ll email your payment receipt to your account email.</p><Link className="ticket-button" href={`/account/login?next=${encodeURIComponent(`/events/${slug}`)}`}>Create account / Sign in</Link></div>
         ) : (
           <TicketPicker
+            currency={quote.currency}
+            priceQuote={quote.token}
             accountEmail={user.email}
             eventId={event.id}
-            devPayments={devPaymentsEnabled}
             eventDay={stayOptions?.eventDay ?? null}
-            hotels={stayOptions?.hotels ?? []}
+            hotels={(stayOptions?.hotels ?? []).map(h => ({ ...h, rooms: h.rooms.map(r => ({ ...r, nightlyCents: convertCents(r.nightlyCents, quote.exchangeRate) })) }))}
             ticketTypes={event.ticketTypes.map((t) => ({
               id: t.id,
               name: t.name,
-              priceCents: ticketPriceCents(event.slug),
+              priceCents: convertCents(ticketPriceCents(t.priceCents), quote.exchangeRate),
               available: t.available,
               unlimited: t.unlimited,
               maxPerOrder: t.maxPerOrder,

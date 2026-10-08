@@ -10,7 +10,7 @@ import { stripe } from "./stripe";
  */
 export async function settleCheckoutSession(session: Stripe.Checkout.Session) {
   const orderId = session.metadata?.orderId;
-  if (!stripe || !orderId) return;
+  if (!stripe || !orderId || !session.livemode) return;
 
   if (session.status === "complete" && session.payment_status === "paid") {
     const result = await confirmOrder(orderId, session.id);

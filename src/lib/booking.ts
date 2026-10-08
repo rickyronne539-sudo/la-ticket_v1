@@ -1,5 +1,6 @@
-import { ticketPriceCents } from "@/lib/pricing";
+import { convertCents, ticketPriceCents } from "@/lib/pricing";
 import "server-only";
+import { verifyPriceQuote } from "./exchange-rates";
 import { createHmac, randomBytes } from "node:crypto";
 import { Prisma } from "@prisma/client";
 import { prisma } from "./db";
@@ -85,6 +86,7 @@ export async function createHold(input: {
   userId: string;
   items: RequestedItem[];
   stay?: StayRequest | null;
+  priceQuote?: string;
 }) {
   const items = input.items.filter((i) => i.quantity > 0);
   if (items.length === 0) throw new BookingError("Pick at least one ticket.");
@@ -95,6 +97,10 @@ export async function createHold(input: {
   });
   if (!event || !event.published) throw new BookingError("Event not found.");
   if (event.startsAt < new Date()) throw new BookingError("This event has already started.");
+
+  let pricing;
+  try { pricing = verifyPriceQuote(input.priceQuote, event); }
+  catch (err) { throw new BookingError(err instanceof Error ? err.message : "Please refresh your price quote."); }
 
   const types = new Map(event.ticketTypes.map((t) => [t.id, t]));
   for (const item of items) {
@@ -110,11 +116,17 @@ export async function createHold(input: {
   if (input.stay) {
     try {
       priced = await priceStay(input.stay, event);
+      priced.stay.nightlyCents = convertCents(priced.stay.nightlyCents, pricing.exchangeRate);
     } catch (err) {
       if (err instanceof StayError) throw new BookingError(err.message);
       throw err;
     }
   }
+
+  const orderItems = items.map((i) => {
+    const type = types.get(i.ticketTypeId)!;
+    return { ticketTypeId: type.id, name: type.name, quantity: i.quantity, priceCents: convertCents(ticketPriceCents(type.priceCents), pricing.exchangeRate) };
+  });
 
   const names = new Map(event.ticketTypes.map((t) => [t.id, t.name]));
   await takeAll(items, names);
@@ -128,15 +140,12 @@ export async function createHold(input: {
     }
   }
 
-  const orderItems = items.map((i) => {
-    const type = types.get(i.ticketTypeId)!;
-    return { ticketTypeId: type.id, name: type.name, quantity: i.quantity, priceCents: ticketPriceCents(event.slug) };
-  });
-
   try {
     return await prisma.order.create({
       data: {
         eventId: event.id,
+        currency: pricing.currency,
+        exchangeRate: pricing.exchangeRate,
         email: input.email,
         userId: input.userId,
         items: orderItems,

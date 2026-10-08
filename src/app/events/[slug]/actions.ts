@@ -1,17 +1,17 @@
 "use server";
 
-import { NAIROBI_TEST_SLUG } from "@/lib/pricing";
 import { currentCustomer } from "@/lib/customer";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { BookingError, confirmOrder, createHold, releaseOrder } from "@/lib/booking";
+import { BookingError, createHold, releaseOrder } from "@/lib/booking";
 import { prisma } from "@/lib/db";
 import { expireStaleOrders } from "@/lib/payments";
-import { devPaymentsEnabled, stripe } from "@/lib/stripe";
+import { livePaymentsConfigured, stripe } from "@/lib/stripe";
 
 export type CheckoutState = { error?: string };
 
 const checkoutSchema = z.object({
+  priceQuote: z.string().max(20000).optional(),
   eventId: z.string().regex(/^[a-f0-9]{24}$/),
   email: z.email("Enter a valid email address."),
   items: z
@@ -36,6 +36,7 @@ export async function startCheckout(_prev: CheckoutState, formData: FormData): P
   const quantities = formData.getAll("quantity").map(String);
   const parsed = checkoutSchema.safeParse({
     eventId: formData.get("eventId"),
+    priceQuote: formData.get("priceQuote") || undefined,
     email: user.email,
     items: ticketTypeIds.map((ticketTypeId, i) => ({ ticketTypeId, quantity: quantities[i] })),
     stay: formData.get("roomTypeId")
@@ -50,6 +51,8 @@ export async function startCheckout(_prev: CheckoutState, formData: FormData): P
   });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid request." };
 
+  if (!stripe || !livePaymentsConfigured) return { error: "Live payments are temporarily unavailable. Please try again later." };
+
   // Free up abandoned holds before reserving, so inventory isn't stuck waiting on the cron.
   await expireStaleOrders();
 
@@ -61,33 +64,9 @@ export async function startCheckout(_prev: CheckoutState, formData: FormData): P
     throw err;
   }
 
-  if (order.event.slug === NAIROBI_TEST_SLUG &&
-      (!/^(sk|rk)_live_/.test(process.env.STRIPE_SECRET_KEY ?? "") ||
-       !process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.startsWith("pk_live_"))) {
+  if (order.totalCents <= 0) {
     await releaseOrder(order.id);
-    return { error: "This test requires live Stripe payments. Payments are not configured for live mode." };
-  }
-
-  const orderUrl = `/orders/${order.id}?t=${encodeURIComponent(order.accessToken)}`;
-
-  if (order.totalCents === 0) {
-    // Free tickets: nothing to charge, Stripe doesn't accept $0 sessions.
-    await confirmOrder(order.id);
-    redirect(orderUrl);
-  }
-
-  if (!stripe) {
-    if (!devPaymentsEnabled) {
-      await releaseOrder(order.id);
-      return { error: "Payments are not configured." };
-    }
-    await confirmOrder(order.id);
-    redirect(orderUrl);
-  }
-
-  if (!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) {
-    await releaseOrder(order.id);
-    return { error: "Online payments are temporarily unavailable. Please try again later." };
+    return { error: "This booking does not have a valid paid ticket price." };
   }
 
   const checkoutUrl = `/orders/${order.id}/checkout?t=${encodeURIComponent(order.accessToken)}`;
@@ -104,7 +83,7 @@ export async function startCheckout(_prev: CheckoutState, formData: FormData): P
         ...order.items.filter((item) => item.quantity > 0).map((item) => ({
           quantity: item.quantity,
           price_data: {
-            currency: "usd",
+            currency: order.currency.toLowerCase(),
             unit_amount: item.priceCents,
             product_data: { name: `${order.event.title} — ${item.name}` },
           },
@@ -114,7 +93,7 @@ export async function startCheckout(_prev: CheckoutState, formData: FormData): P
           ? [{
               quantity: order.hotelStay.rooms * order.hotelStay.nights,
               price_data: {
-                currency: "usd",
+                currency: order.currency.toLowerCase(),
                 unit_amount: order.hotelStay.nightlyCents,
                 product_data: {
                   name: `${order.hotelStay.hotelName} — ${order.hotelStay.roomName}`,

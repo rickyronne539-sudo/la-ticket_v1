@@ -1,3 +1,5 @@
+import { convertCents, eventCurrency, ticketPriceCents, type Currency } from "@/lib/pricing";
+import { exchangeRateFor } from "@/lib/exchange-rates";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -12,17 +14,22 @@ export const metadata: Metadata = {
  description: "Plan a trip around a live event: find tickets, then a hotel close to the venue.",
 };
 
-type Listing = { title: string; slug: string; imageUrl: string | null; city: string; venue: string; startsAt: Date; fromCents: number | null };
+type Listing = { currency: Currency; exchangeRate: number | null; title: string; slug: string; imageUrl: string | null; city: string; venue: string; startsAt: Date; fromCents: number | null };
 
 async function loadTravel() {
  const events = await prisma.event.findMany({
   // Events you sell always count; listings without a poster only if they have one to show.
-  where: { published: true, startsAt: { gte: new Date() }, OR: [{ imageUrl: { not: null } }, { ticketTypes: { some: { available: { gt: 0 } } } }] },
-  select: { title: true, slug: true, imageUrl: true, venue: true, startsAt: true, ticketTypes: { where: { available: { gt: 0 } }, select: { priceCents: true } } },
+  where: { published: true, startsAt: { gte: new Date() }, OR: [{ imageUrl: { not: null } }, { ticketTypes: { some: { OR: [{ unlimited: true }, { available: { gt: 0 } }]  } } }] },
+  select: { title: true, slug: true, imageUrl: true, venue: true, startsAt: true, ticketTypes: { where: { OR: [{ unlimited: true }, { available: { gt: 0 } }]  }, select: { priceCents: true } } },
   orderBy: { startsAt: "asc" },
   take: 2000,
  });
- const listings: Listing[] = events.map(e => ({ title: e.title, slug: e.slug, imageUrl: e.imageUrl, city: e.venue.city, venue: e.venue.name, startsAt: e.startsAt, fromCents: e.ticketTypes.length ? Math.min(...e.ticketTypes.map(t => t.priceCents)) : null }));
+ const audRate = events.some(e => eventCurrency(e.venue) === "AUD") ? await exchangeRateFor("AUD").catch(() => null) : null;
+ const listings: Listing[] = events.map(e => {
+  const currency = eventCurrency(e.venue);
+  const exchangeRate = currency === "AUD" ? audRate?.exchangeRate ?? null : 1;
+  return { title: e.title, slug: e.slug, imageUrl: e.imageUrl, city: e.venue.city, venue: e.venue.name, startsAt: e.startsAt, currency, exchangeRate, fromCents: exchangeRate && e.ticketTypes.length ? Math.min(...e.ticketTypes.map(t => convertCents(ticketPriceCents(t.priceCents), exchangeRate))) : null };
+ });
 
  // Cheapest nightly price per city among published hotels with rooms left on some upcoming night.
  const today = new Date().toISOString().slice(0, 10);
@@ -39,7 +46,7 @@ async function loadTravel() {
 
  // Packages: one card per show, most dates first (the shows people travel for).
  const byTitle = new Map<string, Listing[]>();
- for (const l of listings) byTitle.set(l.title, [...(byTitle.get(l.title) ?? []), l]);
+ for (const l of listings) { const key = `${l.title}:${l.currency}`; byTitle.set(key, [...(byTitle.get(key) ?? []), l]); }
  const packages = [...byTitle.values()]
   // Shows you sell come first (with a hotel, then without), then the busiest listings.
   .map(dates => ({ dates, sold: dates.filter(d => d.fromCents !== null) }))
@@ -53,7 +60,7 @@ async function loadTravel() {
    const first = dates[0];
    const cities = new Set(dates.map(d => d.city));
    const fromCents = dates.some(d => d.fromCents !== null) ? Math.min(...dates.filter(d => d.fromCents !== null).map(d => d.fromCents!)) : null;
-   const hotelCents = fromCents === null ? null : dates.reduce<number | null>((n, d) => { const h = hotelIn(d.city); return h === null ? n : n === null ? h : Math.min(n, h); }, null);
+   const hotelCents = fromCents === null ? null : dates.reduce<number | null>((n, d) => { const base = hotelIn(d.city); const h = base !== null && d.exchangeRate ? convertCents(base, d.exchangeRate) : null; return h === null ? n : n === null ? h : Math.min(n, h); }, null);
    const sale: "package" | "tickets" | "external" = fromCents === null ? "external" : hotelCents !== null ? "package" : "tickets";
    return {
     ...first,
@@ -72,7 +79,7 @@ async function loadTravel() {
  const destinations = [...byCity.entries()]
   .sort((a, b) => b[1].length - a[1].length)
   .slice(0, 6)
-  .map(([city, list]) => ({ city, count: list.length, venues: new Set(list.map(l => l.venue)).size, imageUrl: list.find(l => l.imageUrl)?.imageUrl ?? null, hotelCents: hotelIn(city) }));
+  .map(([city, list]) => ({ city, count: list.length, venues: new Set(list.map(l => l.venue)).size, imageUrl: list.find(l => l.imageUrl)?.imageUrl ?? null, currency: list[0].currency, hotelCents: hotelIn(city) !== null && list[0].exchangeRate ? convertCents(hotelIn(city)!, list[0].exchangeRate) : null }));
 
  const cities = [...byCity.keys()].sort();
  return { packages, destinations, cities };
@@ -124,7 +131,7 @@ export default async function TravelPage() {
        <h3>{p.title}</h3>
        {p.sale === "external"
         ? <ul><li><span className="package-pending" aria-hidden="true"/>Booking opens soon</li><li><Check/>Hotels near the venue</li></ul>
-        : <ul><li><Check/>Tickets from {formatPrice(p.fromCents!)}</li>{p.hotelCents !== null ? <li><Check/>Hotel from {formatPrice(p.hotelCents)}/night, one checkout</li> : <li><Check/>Buy here, instant QR tickets</li>}</ul>}
+        : <ul><li><Check/>Tickets from {formatPrice(p.fromCents!, p.currency)}</li>{p.hotelCents !== null ? <li><Check/>Hotel from {formatPrice(p.hotelCents, p.currency)}/night, one checkout</li> : <li><Check/>Buy here, instant QR tickets</li>}</ul>}
       </div>
       <span className="package-arrow" aria-hidden="true">›</span>
      </Link>
@@ -141,7 +148,7 @@ export default async function TravelPage() {
     <div className="destination-body">
      <Link href={`/?city=${encodeURIComponent(d.city)}#results`} className="destination-city">{d.city}</Link>
      <div><small>{d.venues} venue{d.venues === 1 ? "" : "s"}</small>{d.hotelCents !== null
-      ? <Link href={`/?city=${encodeURIComponent(d.city)}#results`}>Hotels from {formatPrice(d.hotelCents)}</Link>
+      ? <Link href={`/?city=${encodeURIComponent(d.city)}#results`}>Hotels from {formatPrice(d.hotelCents, d.currency)}</Link>
       : <a href={hotelSearchUrl(d.city)} target="_blank" rel="noreferrer">Hotels ↗</a>}</div>
     </div>
    </div>)}</div>

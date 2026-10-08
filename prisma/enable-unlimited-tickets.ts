@@ -10,7 +10,7 @@ async function main() {
   if (!from || !to || !Number.isFinite(Date.parse(from)) || !Number.isFinite(Date.parse(to)) || Date.parse(from) >= Date.parse(to)) {
     throw new Error("Pass valid --from and --to timestamps (end exclusive).");
   }
-  const where = { published: true, startsAt: { gte: new Date(from), lt: new Date(to) } };
+  const where = { published: true, NOT: { OR: [{ slug: { startsWith: "olivia-dean-sydney-" } }, { slug: "nairobi-test-concert" }] }, startsAt: { gte: new Date(from), lt: new Date(to) } };
   const events = await prisma.event.findMany({ where, select: { id: true } });
   const types = await prisma.ticketType.findMany({ select: { eventId: true } });
   const withTickets = new Set(types.map(type => type.eventId));

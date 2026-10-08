@@ -1,6 +1,6 @@
 "use server";
 
-import { TICKET_PRICE_CENTS } from "@/lib/pricing";
+import { ticketPriceCents } from "@/lib/pricing";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -42,10 +42,10 @@ export async function addTicketType(_prev: FormState, formData: FormData): Promi
  await requireAdmin();
  const parsed = ticketTypeSchema.safeParse(Object.fromEntries(formData));
  if (!parsed.success) return { error: first(parsed.error) };
- const { eventId, name, capacity, maxPerOrder } = parsed.data;
+ const { eventId, name, price, capacity, maxPerOrder } = parsed.data;
  const event = await prisma.event.findUnique({ where: { id: eventId }, select: { slug: true } });
  if (!event) return { error: "Event not found." };
- await prisma.ticketType.create({ data: { eventId, name, priceCents: TICKET_PRICE_CENTS, capacity, available: capacity, maxPerOrder } });
+ await prisma.ticketType.create({ data: { eventId, name, priceCents: ticketPriceCents(price), capacity, available: capacity, maxPerOrder } });
  revalidatePath(`/admin/events/${eventId}`);
  revalidatePath(`/events/${event.slug}`);
  return { ok: `${name} added: ${capacity} tickets on sale.` };
@@ -56,8 +56,8 @@ export async function adjustTickets(formData: FormData) {
  await requireAdmin();
  const id = objectId.parse(formData.get("ticketTypeId"));
  const change = z.coerce.number().int().min(-100000).max(100000).parse(formData.get("change"));
- const price = TICKET_PRICE_CENTS;
- const type = await prisma.ticketType.findUniqueOrThrow({ where: { id } });
+ const type = await prisma.ticketType.findUniqueOrThrow({ where: { id }, include: { event: { select: { slug: true } } } });
+ const price = ticketPriceCents(dollars.parse(formData.get("price")));
  if (!type.unlimited && change < 0) {
   await prisma.ticketType.updateMany({ where: { id, available: { gte: -change } }, data: { available: { increment: change }, capacity: { increment: change } } });
  } else if (!type.unlimited && change > 0) {

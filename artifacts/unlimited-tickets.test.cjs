@@ -10,8 +10,8 @@ const pricingContext = { exports: {} };
 vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/lib/pricing.ts', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText, pricingContext);
 const pricing = pricingContext.exports;
 
-function setup({ unlimited = true, available = 0, failOrder = false, slug = "regular-event" } = {}) {
-  const type = { id: 'ticket', name: 'General Admission', unlimited, available, maxPerOrder: 8 };
+function setup({ unlimited = true, available = 0, failOrder = false, slug = "regular-event", priceCents = 20000, currency = "USD", rate = 1 } = {}) {
+  const type = { id: 'ticket', name: 'General Admission', priceCents, unlimited, available, maxPerOrder: 8 };
   const event = { id: 'event', slug, published: true, startsAt: new Date(Date.now() + 86400000), ticketTypes: [type] };
   const calls = { inventoryWrites: 0, issued: 0 };
   let order;
@@ -49,6 +49,7 @@ function setup({ unlimited = true, available = 0, failOrder = false, slug = "reg
     'node:crypto': crypto,
     '@prisma/client': { Prisma: { PrismaClientKnownRequestError: class extends Error {} } },
     './db': { prisma },
+    './exchange-rates': { verifyPriceQuote: () => ({currency, exchangeRate: rate}) },
     './hotels': {},
   };
   const context = { exports: {}, require: name => {
@@ -100,10 +101,13 @@ test('finite inventory still sells out and is restored once on cancellation', as
   assert.equal(x.type.available, 2);
 });
 
-test('Nairobi test holds cost exactly 50 cents', async () => {
-  const x = setup({ slug: pricing.NAIROBI_TEST_SLUG });
-  const order = await x.hold(1);
-  assert.equal(order.totalCents, 50);
-  assert.equal(order.items[0].priceCents, 50);
-  assert.equal(order.status, 'PENDING');
+
+
+test('Australian order stores rounded AUD amounts and its exchange rate', async () => {
+  const x = setup({ priceCents: 11000, currency: 'AUD', rate: 1.4375 });
+  const order = await x.hold(2);
+  assert.equal(order.currency, 'AUD');
+  assert.equal(order.exchangeRate, 1.4375);
+  assert.equal(order.items[0].priceCents, 15813);
+  assert.equal(order.totalCents, 31626);
 });

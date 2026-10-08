@@ -177,6 +177,9 @@ model Order {
   // Set when the order is a ticket + hotel package.
   hotelStay       HotelStay?
   totalCents      Int
+  // Missing fields on historical MongoDB orders retain their original USD meaning.
+  currency        String      @default("USD")
+  exchangeRate    Float       @default(1)
   status          OrderStatus @default(PENDING)
   // Secret in the order URL so guests can view their tickets without an account.
   accessToken     String      @unique

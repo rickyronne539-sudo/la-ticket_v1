@@ -24,7 +24,7 @@ export default async function AdminEventTickets(props: PageProps<"/admin/events/
   <p className="admin-note">{formatDate(event.startsAt, event.venue.timezone)} · {event.venue.name}, {event.venue.city} · <Link className="admin-link" href={`/events/${event.slug}`}>View public page ↗</Link></p>
   <p className="admin-note">{hotels ? `${hotels} published hotel${hotels > 1 ? "s" : ""} in ${event.venue.city}: customers can add a stay.` : `No published hotels in ${event.venue.city} yet, so this sells as tickets only.`}</p>
 
-  <h2>Ticket types</h2>
+  <h2>Ticket types</h2><p className="admin-note">Enter base prices in USD. Australian events automatically convert to AUD for customers and checkout.</p>
   {event.ticketTypes.length ? <div className="admin-table-wrap"><table className="admin-table">
    <thead><tr><th>Type</th><th>Price</th><th>Left / total</th><th>Change</th></tr></thead>
    <tbody>{event.ticketTypes.map(t => <tr key={t.id}>
@@ -34,7 +34,7 @@ export default async function AdminEventTickets(props: PageProps<"/admin/events/
     <td>{t.unlimited ? "Unlimited availability" : <form action={adjustTickets} className="admin-inline">
      <input type="hidden" name="ticketTypeId" value={t.id}/>
      <label>Add or remove<input name="change" type="number" step="1" defaultValue={0} aria-label={`Tickets to add to ${t.name}`}/></label>
-     <label>Price $<input name="price" type="number" step="0.01" min="0" value="200.00" readOnly aria-label={`Price of ${t.name}`}/></label>
+     <label>Base price (USD)<input name="price" type="number" step="0.01" min="0" defaultValue={(t.priceCents / 100).toFixed(2)} aria-label={`Price of ${t.name}`}/></label>
      <button>Update</button>
     </form>}</td>
    </tr>)}</tbody>
@@ -44,7 +44,7 @@ export default async function AdminEventTickets(props: PageProps<"/admin/events/
   <AdminForm action={addTicketType} submit="Add tickets" className="admin-grid">
    <input type="hidden" name="eventId" value={event.id}/>
    <label>Name<input name="name" required placeholder="General Admission" maxLength={80}/></label>
-   <label>Price ($)<input name="price" type="number" step="0.01" min="0" value="200.00" readOnly required/></label>
+   <label>Base price (USD)<input name="price" type="number" step="0.01" min="0" defaultValue="200.00" required/></label>
    <label>How many<input name="capacity" type="number" min="1" step="1" required/></label>
    <label>Max per order<input name="maxPerOrder" type="number" min="1" max="20" defaultValue={8}/></label>
   </AdminForm>

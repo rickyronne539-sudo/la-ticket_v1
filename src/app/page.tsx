@@ -1,4 +1,5 @@
-import { ticketPriceCents } from "@/lib/pricing";
+import { exchangeRateFor } from "@/lib/exchange-rates";
+import { convertCents, eventCurrency, ticketPriceCents } from "@/lib/pricing";
 import { connection } from "next/server";
 import { prisma } from "@/lib/db";
 import { DiscoveryHome } from "@/components/discovery-home";
@@ -22,7 +23,16 @@ export default async function Home(props: PageProps<"/">) {
     ...(query ? { OR: [{ title: { contains: query, mode: "insensitive" as const } }, { venue: { is: { name: { contains: query, mode: "insensitive" as const } } } }] } : {}),
   };
   const data = await loadListings(where, date, searching, page).catch(() => null);
-  return <DiscoveryHome query={query} city={city} date={date} category={category ?? ""} page={page} searching={searching} count={data?.[0] ?? 0} unavailable={data === null} events={(data?.[1] ?? []).map(event => ({ id: event.id, slug: event.slug, title: event.title, startsAt: event.startsAt.toISOString(), venue: event.venue, imageUrl: event.imageUrl, externalUrl: event.externalUrl, externalPriceMin: event.externalPriceMin, externalPriceMax: event.externalPriceMax, externalCurrency: event.externalCurrency, localPrice: event.ticketTypes.length ? ticketPriceCents(event.slug) : null }))} />;
+  const events = data?.[1] ?? [];
+  const audRate = events.some(e => eventCurrency(e.venue) === "AUD") ? await exchangeRateFor("AUD").catch(() => null) : null;
+  return <DiscoveryHome query={query} city={city} date={date} category={category ?? ""} page={page} searching={searching} count={data?.[0] ?? 0} unavailable={data === null} events={events.map(event => {
+    const currency = eventCurrency(event.venue);
+    const rate = currency === "AUD" ? audRate?.exchangeRate : 1;
+    return { id: event.id, slug: event.slug, title: event.title, startsAt: event.startsAt.toISOString(), venue: event.venue, imageUrl: event.imageUrl, externalUrl: event.externalUrl, externalPriceMin: event.externalPriceMin, externalPriceMax: event.externalPriceMax, externalCurrency: event.externalCurrency, currency,
+      localPrice: rate && event.ticketTypes.length ? Math.min(...event.ticketTypes.map(t => convertCents(ticketPriceCents(t.priceCents), rate))) : null,
+      bookable: event.ticketTypes.some(t => t.unlimited || t.available > 0),
+    };
+  })} />;
 }
 
 async function loadListings(where: Prisma.EventWhereInput, date: string, searching: boolean, page: number) {
@@ -39,6 +49,6 @@ async function loadListings(where: Prisma.EventWhereInput, date: string, searchi
   }
   return Promise.all([
     prisma.event.count({ where: filtered }),
-    searching ? prisma.event.findMany({ where: filtered, orderBy: [{ startsAt: "asc" }, { id: "asc" }], skip: (page - 1) * 24, take: 24, include: { ticketTypes: { where: { OR: [{ unlimited: true }, { available: { gt: 0 } }] }, select: { priceCents: true } } } }) : Promise.resolve([]),
+    searching ? prisma.event.findMany({ where: filtered, orderBy: [{ startsAt: "asc" }, { id: "asc" }], skip: (page - 1) * 24, take: 24, include: { ticketTypes: { select: { priceCents: true, unlimited: true, available: true } } } }) : Promise.resolve([]),
   ]);
 }

@@ -32,8 +32,8 @@ export default async function AdminHome() {
     <td><span className={`admin-status s-${o.status.toLowerCase()}`}>{o.status}</span></td>
     <td>{o.event.title}<br/><small>{o.event.venue.city} · {o.event.startsAt.toISOString().slice(0, 10)}</small></td>
     <td>{o.email}</td>
-    <td>{o.hotelStay ? <>{o.hotelStay.hotelName} · {o.hotelStay.roomName}<br/><small>{o.hotelStay.guestName} · {o.hotelStay.checkIn} → {o.hotelStay.checkOut} · {o.hotelStay.rooms} room{o.hotelStay.rooms > 1 ? "s" : ""} · {formatPrice(stayTotal(o.hotelStay))}</small></> : <small>Tickets only</small>}</td>
-    <td>{formatPrice(o.totalCents)}</td>
+    <td>{o.hotelStay ? <>{o.hotelStay.hotelName} · {o.hotelStay.roomName}<br/><small>{o.hotelStay.guestName} · {o.hotelStay.checkIn} → {o.hotelStay.checkOut} · {o.hotelStay.rooms} room{o.hotelStay.rooms > 1 ? "s" : ""} · {formatPrice(stayTotal(o.hotelStay), o.currency)}</small></> : <small>Tickets only</small>}</td>
+    <td>{formatPrice(o.totalCents, o.currency)}</td>
    </tr>)}</tbody>
   </table>{!orders.length && <p className="admin-note">No orders yet.</p>}</div>
  </div>;
