@@ -1,0 +1,319 @@
+{
+  "groups": [
+    {
+      "title": "Concerts",
+      "id": "concerts",
+      "category": "CONCERT",
+      "cards": [
+        {
+          "title": "Oasis",
+          "genre": "Rock",
+          "url": "https://www.ticketmaster.com/oasis-tickets/artist/766720",
+          "image": "/images/catalog/9789c2d7dd08.jpg"
+        },
+        {
+          "title": "Eagles",
+          "genre": "Pop",
+          "url": "https://www.ticketmaster.com/eagles-tickets/artist/734977",
+          "image": "/images/catalog/d05d1ab232af.jpg"
+        },
+        {
+          "title": "JAŸ-Z",
+          "genre": "Urban",
+          "url": "https://www.ticketmaster.com/jayz-tickets/artist/781009",
+          "image": "/images/catalog/fd741f7148da.jpg"
+        },
+        {
+          "title": "Metallica",
+          "genre": "Heavy Metal",
+          "url": "https://www.ticketmaster.com/metallica-tickets/artist/735647",
+          "image": "/images/catalog/2116652ddd44.jpg"
+        },
+        {
+          "title": "Lady A",
+          "genre": "Country",
+          "url": "https://www.ticketmaster.com/lady-a-tickets/artist/1173672",
+          "image": "/images/catalog/67bba3d78508.jpg"
+        },
+        {
+          "title": "Usher Raymond & Chris Brown",
+          "genre": "R&B",
+          "url": "https://www.ticketmaster.com/usher-raymond-chris-brown-tickets/artist/4314089",
+          "image": "/images/catalog/9d655e6ddce5.jpg"
+        },
+        {
+          "title": "Omer Adam",
+          "genre": "Hebrew",
+          "url": "https://www.ticketmaster.com/omer-adam-tickets/artist/2428788",
+          "image": "/images/catalog/5cf5c055d9eb.jpg"
+        },
+        {
+          "title": "Harry Styles",
+          "genre": "Pop Rock",
+          "url": "https://www.ticketmaster.com/harry-styles-tickets/artist/2366444",
+          "image": "/images/catalog/05ef13d7428a.jpg"
+        },
+        {
+          "title": "The Spinners",
+          "genre": "R&B",
+          "url": "https://www.ticketmaster.com/the-spinners-tickets/artist/736173",
+          "image": "/images/catalog/7914d042ba28.jpg"
+        },
+        {
+          "title": "Lizzy McAlpine",
+          "genre": "Adult Contemporary",
+          "url": "https://www.ticketmaster.com/lizzy-mcalpine-tickets/artist/2782189",
+          "image": "/images/catalog/f24eee951f51.jpg"
+        }
+      ]
+    },
+    {
+      "title": "Sports",
+      "id": "sports",
+      "category": "SPORTS",
+      "cards": [
+        {
+          "title": "Brooklyn Nets",
+          "genre": "NBA",
+          "url": "https://www.ticketmaster.com/brooklyn-nets-tickets/artist/805983",
+          "image": "/images/catalog/7fea7c6d8bee.jpg"
+        },
+        {
+          "title": "Phoenix Suns",
+          "genre": "NBA",
+          "url": "https://www.ticketmaster.com/phoenix-suns-tickets/artist/806004",
+          "image": "/images/catalog/b6e79a250926.jpg"
+        },
+        {
+          "title": "Atlanta Hawks",
+          "genre": "NBA",
+          "url": "https://www.ticketmaster.com/atlanta-hawks-tickets/artist/805898",
+          "image": "/images/catalog/900c77eb434c.jpg"
+        },
+        {
+          "title": "Golden State Warriors",
+          "genre": "NBA",
+          "url": "https://www.ticketmaster.com/golden-state-warriors-tickets/artist/805946",
+          "image": "/images/catalog/9784f44f938c.jpg"
+        },
+        {
+          "title": "Las Vegas Raiders",
+          "genre": "NFL",
+          "url": "https://www.ticketmaster.com/las-vegas-raiders-tickets/artist/805994",
+          "image": "/images/catalog/f8990b6bd2c3.jpg"
+        },
+        {
+          "title": "Tampa Bay Rays",
+          "genre": "MLB",
+          "url": "https://www.ticketmaster.com/tampa-bay-rays-tickets/artist/806027",
+          "image": "/images/catalog/e538390d370a.jpg"
+        },
+        {
+          "title": "Miami Heat",
+          "genre": "NBA",
+          "url": "https://www.ticketmaster.com/miami-heat-tickets/artist/805966",
+          "image": "/images/catalog/c2aa96f39331.jpg"
+        },
+        {
+          "title": "Charlotte Hornets",
+          "genre": "NBA",
+          "url": "https://www.ticketmaster.com/charlotte-hornets-tickets/artist/931493",
+          "image": "/images/catalog/f61536010a0b.jpg"
+        },
+        {
+          "title": "Orlando Magic",
+          "genre": "NBA",
+          "url": "https://www.ticketmaster.com/orlando-magic-tickets/artist/805995",
+          "image": "/images/catalog/5eeceabf8c86.jpg"
+        },
+        {
+          "title": "Portland Trail Blazers",
+          "genre": "NBA",
+          "url": "https://www.ticketmaster.com/portland-trail-blazers-tickets/artist/806009",
+          "image": "/images/catalog/d98a7610ea4b.jpg"
+        }
+      ]
+    },
+    {
+      "title": "Arts, Theater & Comedy",
+      "id": "arts",
+      "category": "ARTS",
+      "cards": [
+        {
+          "title": "Long Beach Symphony Pops",
+          "genre": "Symphonic",
+          "url": "https://www.ticketmaster.com/long-beach-symphony-pops-tickets/artist/1364005",
+          "image": "/images/catalog/a756e7d70ff3.jpg"
+        },
+        {
+          "title": "Hamilton (Touring)",
+          "genre": "Musical",
+          "url": "https://www.ticketmaster.com/hamilton-touring-tickets/artist/2336213",
+          "image": "/images/catalog/ee2de410393b.jpg"
+        },
+        {
+          "title": "Hamilton (NY)",
+          "genre": "Musical",
+          "url": "https://www.ticketmaster.com/hamilton-ny-tickets/artist/2095830",
+          "image": "/images/catalog/e168ebdfd299.jpg"
+        },
+        {
+          "title": "Disney On Ice presents Find Your Hero",
+          "genre": "Ice Shows",
+          "url": "https://www.ticketmaster.com/disney-on-ice-presents-find-your-tickets/artist/1742147",
+          "image": "/images/catalog/f47fab1ddb40.jpg"
+        },
+        {
+          "title": "Dave Chappelle",
+          "genre": "Comedy",
+          "url": "https://www.ticketmaster.com/dave-chappelle-tickets/artist/803682",
+          "image": "/images/catalog/9923e271a30d.jpg"
+        },
+        {
+          "title": "John Mulaney",
+          "genre": "Comedy",
+          "url": "https://www.ticketmaster.com/john-mulaney-tickets/artist/1231400",
+          "image": "/images/catalog/b3321e1bd47e.jpg"
+        },
+        {
+          "title": "The Wizard of Oz at Sphere",
+          "genre": "Spectacular",
+          "url": "https://www.ticketmaster.com/the-wizard-of-oz-at-sphere-tickets/artist/3552227",
+          "image": "/images/catalog/99cd698bcc66.jpg"
+        },
+        {
+          "title": "Franco Escamilla",
+          "genre": "Comedy",
+          "url": "https://www.ticketmaster.com/franco-escamilla-tickets/artist/2281118",
+          "image": "/images/catalog/16495a9c55c3.jpg"
+        },
+        {
+          "title": "Matt Rife",
+          "genre": "Comedy",
+          "url": "https://www.ticketmaster.com/matt-rife-tickets/artist/2431961",
+          "image": "/images/catalog/4a1089ba2b30.jpg"
+        },
+        {
+          "title": "Jo Koy",
+          "genre": "Comedy",
+          "url": "https://www.ticketmaster.com/jo-koy-tickets/artist/1179917",
+          "image": "/images/catalog/3a8ae1efe3f6.jpg"
+        }
+      ]
+    },
+    {
+      "title": "Family",
+      "id": "family",
+      "category": "FAMILY",
+      "cards": [
+        {
+          "title": "Disney On Ice presents Find Your Hero",
+          "genre": "Ice Shows",
+          "url": "https://www.ticketmaster.com/disney-on-ice-presents-find-your-tickets/artist/1742147",
+          "image": "/images/catalog/f47fab1ddb40.jpg"
+        },
+        {
+          "title": "Coachella Valley Music and Arts Festival",
+          "genre": "Alternative Rock",
+          "url": "https://www.ticketmaster.com/coachella-valley-music-and-arts-festival-tickets/artist/806308",
+          "image": "/images/catalog/8f3f8f82b7ef.jpg"
+        },
+        {
+          "title": "PBR: Unleash the Beast",
+          "genre": "Bullriding",
+          "url": "https://www.ticketmaster.com/pbr-unleash-the-beast-tickets/artist/2550701",
+          "image": "/images/catalog/07c83e49c6df.jpg"
+        },
+        {
+          "title": "Westminster Kennel Club Dog Show",
+          "genre": "Other",
+          "url": "https://www.ticketmaster.com/westminster-kennel-club-dog-show-tickets/artist/847597",
+          "image": "/images/catalog/4992928293ec.jpg"
+        },
+        {
+          "title": "PBR: Unleash the Beast",
+          "genre": "Bullriding",
+          "url": "https://www.ticketmaster.com/pbr-unleash-the-beast-tickets/artist/1274490",
+          "image": "/images/catalog/988790fd72f6.jpg"
+        },
+        {
+          "title": "The Hondo Rodeo Fest",
+          "genre": "Rodeo",
+          "url": "https://www.ticketmaster.com/the-hondo-rodeo-fest-tickets/artist/3115705",
+          "image": "/images/catalog/59a8fe22481a.jpg"
+        },
+        {
+          "title": "Disney On Ice presents Magic in the Stars",
+          "genre": "Ice Shows",
+          "url": "https://www.ticketmaster.com/disney-on-ice-presents-magic-in-tickets/artist/2963989",
+          "image": "/images/catalog/79994d16d6ff.jpg"
+        },
+        {
+          "title": "Harlem Globetrotters",
+          "genre": "Other",
+          "url": "https://www.ticketmaster.com/harlem-globetrotters-tickets/artist/806223",
+          "image": "/images/catalog/87e309a52a76.jpg"
+        },
+        {
+          "title": "The Anazala Family",
+          "genre": "Other",
+          "url": "https://www.ticketmaster.com/the-anazala-family-tickets/artist/4447499",
+          "image": "/images/catalog/68859a59bc75.jpg"
+        },
+        {
+          "title": "Disney On Ice presents Spotlight Magic!",
+          "genre": "Ice Shows",
+          "url": "https://www.ticketmaster.com/disney-on-ice-presents-spotlight-magic-tickets/artist/4231352",
+          "image": "/images/catalog/1f0ea20c1cec.jpg"
+        }
+      ]
+    }
+  ],
+  "guides": [
+    {
+      "title": "NBA Basketball Tickets",
+      "url": "https://www.ticketmaster.com/nba?ac_link=hpguide",
+      "image": "/images/catalog/418f55c85480.jpg"
+    },
+    {
+      "title": "NHL Hockey Tickets",
+      "url": "https://www.ticketmaster.com/nhl?ac_link=hpguide",
+      "image": "/images/catalog/79f7ac79c57e.jpg"
+    },
+    {
+      "title": "MLS Soccer Tickets",
+      "url": "https://www.ticketmaster.com/mls?ac_link=hpguide",
+      "image": "/images/catalog/5142d0a10157.jpg"
+    },
+    {
+      "title": "MLB Baseball Tickets",
+      "url": "https://www.ticketmaster.com/mlb?ac_link=hpguide",
+      "image": "/images/catalog/3e2b6a4b919d.jpg"
+    },
+    {
+      "title": "Broadway Tickets",
+      "url": "https://www.ticketmaster.com/broadway?ac_link=hpguide",
+      "image": "/images/catalog/c3d9c5b45159.jpg"
+    }
+  ],
+  "discover": [
+    {
+      "title": "All In Prices Explained",
+      "genre": "General Info",
+      "url": "https://www.ticketmaster.com/welcome/all-in?ac_link=hpguide",
+      "image": "/images/catalog/38b4d1f262db.jpg"
+    },
+    {
+      "title": "What to Bring to a Concert",
+      "genre": "Ticket Tips",
+      "url": "https://blog.ticketmaster.com/what-to-bring-to-a-concert/?ac_link=hpguide",
+      "image": "/images/catalog/ae3d64648674.jpg"
+    },
+    {
+      "title": "MLS 2026 Season FAQs",
+      "genre": "Sports",
+      "url": "https://blog.ticketmaster.com/mls-faqs/?ac_link=hpguide",
+      "image": "/images/catalog/8a92545c84b5.jpg"
+    }
+  ]
+}

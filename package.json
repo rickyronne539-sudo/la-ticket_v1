@@ -1,0 +1,49 @@
+{
+  "name": "la-tickets",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "prisma generate && next build",
+    "start": "next start",
+    "lint": "eslint",
+    "postinstall": "prisma generate",
+    "db:push": "prisma db push && npm run db:indexes",
+    "db:indexes": "node --env-file=.env prisma/ensure-order-indexes.cjs",
+    "db:seed": "prisma db seed",
+    "db:studio": "prisma studio",
+    "tm:sync": "tsx --env-file=.env prisma/ticketmaster.ts",
+    "tm:concerts": "tsx --env-file=.env prisma/ticketmaster.ts --concerts",
+    "tm:australia": "tsx --env-file=.env prisma/ticketmaster.ts --country=AU --all --days=365",
+    "tm:los-angeles": "tsx --env-file=.env prisma/ticketmaster.ts --city=\"Los Angeles\" --all --days=365",
+    "tm:scan": "node prisma/ticketmaster-public.cjs",
+    "tm:import-public": "node --env-file=.env prisma/import-ticketmaster-public.cjs"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.3",
+    "@stripe/stripe-js": "^10.0.0",
+    "next": "16.3.5",
+    "qrcode": "^1.5.4",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "server-only": "^0.0.1",
+    "stripe": "^22.6.2",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/qrcode": "^1.5.6",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.5",
+    "prisma": "^6.19.3",
+    "tailwindcss": "^4",
+    "tsx": "^4.23.13",
+    "typescript": "^5"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  }
+}

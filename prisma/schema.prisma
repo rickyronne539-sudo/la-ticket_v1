@@ -1,0 +1,229 @@
+// MongoDB requires a replica set for Prisma writes (MongoDB Atlas has one by default).
+// Schema changes are applied with `npx prisma db push` — Prisma Migrate does not support MongoDB.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum Category {
+  CONCERT
+  THEATRE
+  ARTS
+  FAMILY
+  NIGHTLIFE
+  SPORTS
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  EXPIRED
+  REFUNDED
+}
+
+type Venue {
+  name    String
+  address String
+  city    String @default("Los Angeles")
+  timezone String @default("America/Los_Angeles")
+  // Visitor details from Ticketmaster, when the venue publishes them.
+  state          String?
+  postalCode     String?
+  country        String?
+  latitude       Float?
+  longitude      Float?
+  parking        String?
+  accessibility  String?
+  boxOfficePhone String?
+  boxOfficeHours String?
+  payment        String?
+  generalRule    String?
+  childRule      String?
+}
+
+// An artist, team or show appearing at an event (Ticketmaster "attraction").
+type Performer {
+  name      String
+  imageUrl  String?
+  genre     String?
+  homepage  String?
+  instagram String?
+  youtube   String?
+  spotify   String?
+  tiktok    String?
+  twitter   String?
+  facebook  String?
+  wiki      String?
+}
+
+model Event {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  slug        String       @unique
+  title       String
+  description String
+  category    Category
+  venue       Venue
+  startsAt    DateTime
+  imageUrl    String?
+  performers  Performer[]
+  seatmapUrl  String?
+  ageRestriction String?
+  published   Boolean      @default(true)
+  // Original source and reference prices for imported events.
+  externalUrl String?
+  externalPriceMin Float?
+  externalPriceMax Float?
+  externalCurrency String?
+  externalPriceCheckedAt DateTime?
+  ticketTypes TicketType[]
+  orders      Order[]
+  createdAt   DateTime     @default(now())
+
+  @@index([category, startsAt])
+}
+
+model TicketType {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  eventId    String   @db.ObjectId
+  event      Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name       String
+  priceCents Int
+  capacity   Int
+  // Unlimited types do not consume or return inventory when orders change state.
+  unlimited  Boolean  @default(false)
+  // Remaining inventory. Decremented atomically when a hold is placed,
+  // incremented back when a hold expires. Never compute this from other fields.
+  available  Int
+  maxPerOrder Int     @default(8)
+  tickets    Ticket[]
+
+  @@index([eventId])
+}
+
+type HotelStay {
+  roomTypeId   String @db.ObjectId
+  hotelName    String
+  hotelAddress String
+  roomName     String
+  checkIn      String // YYYY-MM-DD
+  checkOut     String // YYYY-MM-DD, the morning they leave
+  nights       Int
+  rooms        Int
+  nightlyCents Int
+  guestName    String
+}
+
+type OrderItem {
+  ticketTypeId String @db.ObjectId
+  name         String
+  quantity     Int
+  priceCents   Int
+}
+
+// A hotel near the venues whose rooms you have contracted and sell yourself.
+model Hotel {
+  id          String     @id @default(auto()) @map("_id") @db.ObjectId
+  slug        String     @unique
+  name        String
+  address     String
+  city        String     // matched against event venue cities to offer it with tickets
+  description String     @default("")
+  imageUrl    String?
+  stars       Int?
+  published   Boolean    @default(true)
+  roomTypes   RoomType[]
+  createdAt   DateTime   @default(now())
+
+  @@index([city])
+}
+
+model RoomType {
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
+  hotelId     String      @db.ObjectId
+  hotel       Hotel       @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  name        String      // "Deluxe King"
+  sleeps      Int         @default(2)
+  nightlyCents Int        // price per room per night
+  maxRooms    Int         @default(4) // per order
+  nights      RoomNight[]
+
+  @@index([hotelId])
+}
+
+// Rooms left for one room type on one night ("YYYY-MM-DD", the hotel's local date).
+// Taken atomically like ticket inventory: `available >= rooms` only matches for one buyer.
+model RoomNight {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  roomTypeId String   @db.ObjectId
+  roomType   RoomType @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+  date       String
+  available  Int
+
+  @@unique([roomTypeId, date])
+}
+
+model Order {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  eventId         String      @db.ObjectId
+  event           Event       @relation(fields: [eventId], references: [id])
+  email           String
+  userId          String? @db.ObjectId
+  items           OrderItem[]
+  // Set when the order is a ticket + hotel package.
+  hotelStay       HotelStay?
+  totalCents      Int
+  status          OrderStatus @default(PENDING)
+  // Secret in the order URL so guests can view their tickets without an account.
+  accessToken     String      @unique
+  // Unique for string values only; managed by prisma/ensure-order-indexes.cjs.
+  // MongoDB's ordinary unique index permits only one null/missing value.
+  stripeSessionId String?
+  expiresAt       DateTime
+  paidAt          DateTime?
+  tickets         Ticket[]
+  createdAt       DateTime    @default(now())
+
+  @@index([status, expiresAt])
+  @@index([email])
+}
+
+model CustomerAccount {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  email String @unique
+  passwordHash String
+  createdAt DateTime @default(now())
+}
+
+model CustomerSession {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  tokenHash String @unique
+  userId String @db.ObjectId
+  expiresAt DateTime
+  @@index([userId])
+}
+
+model LoginAttempt {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  key String @unique
+  count Int @default(0)
+  expiresAt DateTime
+}
+
+model Ticket {
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  orderId      String     @db.ObjectId
+  order        Order      @relation(fields: [orderId], references: [id])
+  ticketTypeId String     @db.ObjectId
+  ticketType   TicketType @relation(fields: [ticketTypeId], references: [id])
+  // Value encoded in the QR code and checked at the door.
+  code         String     @unique
+  checkedInAt  DateTime?
+  createdAt    DateTime   @default(now())
+
+  @@index([orderId])
+}
