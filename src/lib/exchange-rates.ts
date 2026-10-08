@@ -3,7 +3,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { eventCurrency, type Currency } from "./pricing";
 
 type Rate = { currency: Currency; exchangeRate: number; rateDate: string };
-type QuoteEvent = { id: string; slug: string; venue: { country?: string | null; timezone?: string }; ticketTypes: { id: string; priceCents: number }[] };
+type QuoteEvent = { id: string; slug: string; venue: { country?: string | null; timezone?: string }; ticketTypes: { id: string; priceCents: number; priceAudCents?: number | null }[] };
 const QUOTE_MS = 30 * 60 * 1000;
 
 export async function exchangeRateFor(currency: Currency): Promise<Rate> {
@@ -22,7 +22,7 @@ export async function exchangeRateFor(currency: Currency): Promise<Rate> {
 }
 
 function fingerprint(event: QuoteEvent) {
-  return JSON.stringify([event.id, event.slug, event.ticketTypes.map(t => [t.id, t.priceCents]).sort((a, b) => String(a[0]).localeCompare(String(b[0])))]);
+  return JSON.stringify([event.id, event.slug, event.ticketTypes.map(t => [t.id, t.priceCents, t.priceAudCents ?? null]).sort((a, b) => String(a[0]).localeCompare(String(b[0])))]);
 }
 
 function sign(payload: string) {

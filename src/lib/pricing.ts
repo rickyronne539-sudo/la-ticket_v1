@@ -7,6 +7,11 @@ export function ticketPriceCents(storedPrice = TICKET_PRICE_CENTS) {
 }
 
 export type Currency = "USD" | "AUD";
+export function ticketChargeCents(ticket: { priceCents: number; priceAudCents?: number | null }, currency: string, rate: number) {
+  return currency === "AUD" && ticket.priceAudCents != null
+    ? convertCents(ticket.priceAudCents, 1)
+    : convertCents(ticketPriceCents(ticket.priceCents), rate);
+}
 export function eventCurrency(venue: { country?: string | null; timezone?: string }): Currency {
   const country = venue.country?.trim().toUpperCase();
   if (["AU", "AUS", "AUSTRALIA"].includes(country ?? "")) return "AUD";

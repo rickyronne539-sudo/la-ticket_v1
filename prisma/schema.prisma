@@ -93,6 +93,8 @@ model TicketType {
   event      Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
   name       String
   priceCents Int
+  // Optional fixed AUD price for Australian events; otherwise convert the USD base.
+  priceAudCents Int?
   capacity   Int
   // Unlimited types do not consume or return inventory when orders change state.
   unlimited  Boolean  @default(false)

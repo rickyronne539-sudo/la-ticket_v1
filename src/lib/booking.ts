@@ -1,4 +1,4 @@
-import { convertCents, ticketPriceCents } from "@/lib/pricing";
+import { convertCents, ticketChargeCents } from "@/lib/pricing";
 import "server-only";
 import { verifyPriceQuote } from "./exchange-rates";
 import { createHmac, randomBytes } from "node:crypto";
@@ -125,7 +125,7 @@ export async function createHold(input: {
 
   const orderItems = items.map((i) => {
     const type = types.get(i.ticketTypeId)!;
-    return { ticketTypeId: type.id, name: type.name, quantity: i.quantity, priceCents: convertCents(ticketPriceCents(type.priceCents), pricing.exchangeRate) };
+    return { ticketTypeId: type.id, name: type.name, quantity: i.quantity, priceCents: ticketChargeCents(type, pricing.currency, pricing.exchangeRate) };
   });
 
   const names = new Map(event.ticketTypes.map((t) => [t.id, t.name]));

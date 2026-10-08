@@ -29,7 +29,7 @@ export default async function AdminEventTickets(props: PageProps<"/admin/events/
    <thead><tr><th>Type</th><th>Price</th><th>Left / total</th><th>Change</th></tr></thead>
    <tbody>{event.ticketTypes.map(t => <tr key={t.id}>
     <td>{t.name}<br/><small>max {t.maxPerOrder} per order</small></td>
-    <td>{formatPrice(t.priceCents)}</td>
+    <td>{t.priceAudCents != null ? `${formatPrice(t.priceAudCents, "AUD")} (fixed)` : formatPrice(t.priceCents)}</td>
     <td>{t.unlimited ? "Unlimited" : `${t.available} / ${t.capacity}`}</td>
     <td>{t.unlimited ? "Unlimited availability" : <form action={adjustTickets} className="admin-inline">
      <input type="hidden" name="ticketTypeId" value={t.id}/>

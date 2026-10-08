@@ -1,4 +1,4 @@
-import { convertCents, eventCurrency, ticketPriceCents, type Currency } from "@/lib/pricing";
+import { convertCents, eventCurrency, ticketChargeCents, type Currency } from "@/lib/pricing";
 import { exchangeRateFor } from "@/lib/exchange-rates";
 import type { Metadata } from "next";
 import Image from "next/image";
@@ -20,7 +20,7 @@ async function loadTravel() {
  const events = await prisma.event.findMany({
   // Events you sell always count; listings without a poster only if they have one to show.
   where: { published: true, startsAt: { gte: new Date() }, OR: [{ imageUrl: { not: null } }, { ticketTypes: { some: { OR: [{ unlimited: true }, { available: { gt: 0 } }]  } } }] },
-  select: { title: true, slug: true, imageUrl: true, venue: true, startsAt: true, ticketTypes: { where: { OR: [{ unlimited: true }, { available: { gt: 0 } }]  }, select: { priceCents: true } } },
+  select: { title: true, slug: true, imageUrl: true, venue: true, startsAt: true, ticketTypes: { where: { OR: [{ unlimited: true }, { available: { gt: 0 } }]  }, select: { priceCents: true, priceAudCents: true } } },
   orderBy: { startsAt: "asc" },
   take: 2000,
  });
@@ -28,7 +28,7 @@ async function loadTravel() {
  const listings: Listing[] = events.map(e => {
   const currency = eventCurrency(e.venue);
   const exchangeRate = currency === "AUD" ? audRate?.exchangeRate ?? null : 1;
-  return { title: e.title, slug: e.slug, imageUrl: e.imageUrl, city: e.venue.city, venue: e.venue.name, startsAt: e.startsAt, currency, exchangeRate, fromCents: exchangeRate && e.ticketTypes.length ? Math.min(...e.ticketTypes.map(t => convertCents(ticketPriceCents(t.priceCents), exchangeRate))) : null };
+  return { title: e.title, slug: e.slug, imageUrl: e.imageUrl, city: e.venue.city, venue: e.venue.name, startsAt: e.startsAt, currency, exchangeRate, fromCents: exchangeRate && e.ticketTypes.length ? Math.min(...e.ticketTypes.map(t => ticketChargeCents(t, currency, exchangeRate))) : null };
  });
 
  // Cheapest nightly price per city among published hotels with rooms left on some upcoming night.

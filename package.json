@@ -12,6 +12,7 @@
     "db:indexes": "node --env-file=.env prisma/ensure-order-indexes.cjs",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
+    "tickets:olivia-dean-unlimited": "tsx --env-file=.env prisma/enable-olivia-dean-unlimited.ts",
     "tm:sync": "tsx --env-file=.env prisma/ticketmaster.ts",
     "tm:concerts": "tsx --env-file=.env prisma/ticketmaster.ts --concerts",
     "tm:australia": "tsx --env-file=.env prisma/ticketmaster.ts --country=AU --all --days=365",

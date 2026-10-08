@@ -1,5 +1,5 @@
 import { exchangeRateFor } from "@/lib/exchange-rates";
-import { convertCents, eventCurrency, ticketPriceCents } from "@/lib/pricing";
+import { eventCurrency, ticketChargeCents } from "@/lib/pricing";
 import { connection } from "next/server";
 import { prisma } from "@/lib/db";
 import { DiscoveryHome } from "@/components/discovery-home";
@@ -29,7 +29,7 @@ export default async function Home(props: PageProps<"/">) {
     const currency = eventCurrency(event.venue);
     const rate = currency === "AUD" ? audRate?.exchangeRate : 1;
     return { id: event.id, slug: event.slug, title: event.title, startsAt: event.startsAt.toISOString(), venue: event.venue, imageUrl: event.imageUrl, externalUrl: event.externalUrl, externalPriceMin: event.externalPriceMin, externalPriceMax: event.externalPriceMax, externalCurrency: event.externalCurrency, currency,
-      localPrice: rate && event.ticketTypes.length ? Math.min(...event.ticketTypes.map(t => convertCents(ticketPriceCents(t.priceCents), rate))) : null,
+      localPrice: rate && event.ticketTypes.length ? Math.min(...event.ticketTypes.map(t => ticketChargeCents(t, currency, rate))) : null,
       bookable: event.ticketTypes.some(t => t.unlimited || t.available > 0),
     };
   })} />;
@@ -49,6 +49,6 @@ async function loadListings(where: Prisma.EventWhereInput, date: string, searchi
   }
   return Promise.all([
     prisma.event.count({ where: filtered }),
-    searching ? prisma.event.findMany({ where: filtered, orderBy: [{ startsAt: "asc" }, { id: "asc" }], skip: (page - 1) * 24, take: 24, include: { ticketTypes: { select: { priceCents: true, unlimited: true, available: true } } } }) : Promise.resolve([]),
+    searching ? prisma.event.findMany({ where: filtered, orderBy: [{ startsAt: "asc" }, { id: "asc" }], skip: (page - 1) * 24, take: 24, include: { ticketTypes: { select: { priceCents: true, priceAudCents: true, unlimited: true, available: true } } } }) : Promise.resolve([]),
   ]);
 }

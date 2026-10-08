@@ -1,4 +1,4 @@
-import { convertCents, ticketPriceCents } from "@/lib/pricing";
+import { convertCents, ticketChargeCents } from "@/lib/pricing";
 import Link from "next/link";
 import { createPriceQuote } from "@/lib/exchange-rates";
 import { currentCustomer } from "@/lib/customer";
@@ -35,7 +35,7 @@ export default async function EventPage(props: PageProps<"/events/[slug]">) {
   const user = await currentCustomer();
   const sellsHere = event.ticketTypes.length > 0;
   const quote = sellsHere ? await createPriceQuote(event).catch(() => null) : null;
-  const fromPrice = quote && sellsHere ? Math.min(...event.ticketTypes.map(t => convertCents(ticketPriceCents(t.priceCents), quote.exchangeRate))) : null;
+  const fromPrice = quote && sellsHere ? Math.min(...event.ticketTypes.map(t => ticketChargeCents(t, quote.currency, quote.exchangeRate))) : null;
   const stayOptions = sellsHere ? await hotelsForEvent(event).catch(() => null) : null;
 
   return (
@@ -93,7 +93,7 @@ export default async function EventPage(props: PageProps<"/events/[slug]">) {
             ticketTypes={event.ticketTypes.map((t) => ({
               id: t.id,
               name: t.name,
-              priceCents: convertCents(ticketPriceCents(t.priceCents), quote.exchangeRate),
+              priceCents: ticketChargeCents(t, quote.currency, quote.exchangeRate),
               available: t.available,
               unlimited: t.unlimited,
               maxPerOrder: t.maxPerOrder,

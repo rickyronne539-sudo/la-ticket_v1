@@ -73,3 +73,10 @@ test('USD pricing does not depend on the AUD provider and old USD forms still wo
   assert.equal(quote.exchangeRate, 1);
   assert.equal(x.exchange.verifyPriceQuote(undefined, x.event).currency, 'USD');
 });
+
+test('fixed Olivia AUD price remains 150 AUD across exchange-rate changes', () => {
+ const ticket = {priceCents:10434,priceAudCents:15000};
+ for (const rate of [1.2,1.4375,1.6]) assert.equal(pricing.ticketChargeCents(ticket,'AUD',rate),15000);
+ assert.equal(pricing.ticketChargeCents({priceCents:11000},'AUD',1.4375),15813);
+ assert.equal(pricing.ticketChargeCents(ticket,'USD',1),10434);
+});
